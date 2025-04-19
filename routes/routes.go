@@ -1,30 +1,26 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/alerdn/go-api/internal/auth"
 	"github.com/alerdn/go-api/internal/usuario"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes() http.Handler {
-	r := chi.NewRouter()
+func SetupRoutes() *gin.Engine {
+	r := gin.Default()
 
-	r.Use(middleware.Logger)
+	api := r.Group("/api/v1")
+	{
+		api.POST("/login", auth.LoginHandler)
+		api.POST("/register", usuario.CadastrarHandler)
 
-	r.Route("/api/v1/", func(r chi.Router) {
-		r.Post("/login", auth.LoginHandler)
-		r.Post("/register", usuario.CadastrarHandler)
-
-		r.Group(func(r chi.Router) {
-			r.Use(auth.JWTMiddleware)
-
-			r.Get("/usuarios", usuario.ListarHandler)
-			r.Get("/perfil", usuario.PerfilHandler)
-		})
-	})
+		protected := api.Group("/")
+		protected.Use(auth.JWTMiddleware())
+		{
+			protected.GET("/usuarios", usuario.ListarHandler)
+			protected.GET("/perfil", usuario.PerfilHandler)
+		}
+	}
 
 	return r
 }

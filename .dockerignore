@@ -1,0 +1,33 @@
+# binários compilados
+/main
+*.exe
+*.out
+
+# diretórios e arquivos de build temporários
+/tmp
+/dist
+/build
+
+# arquivos de config locais
+.env
+*.env
+*.local
+*.toml
+*.sqlite
+
+# editor e IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+.DS_Store
+
+# arquivos e pastas desnecessárias no container
+docs/
+*.log
+*.coverprofile
+
+# cache Go
+vendor/
+go.sum

@@ -1,29 +1,32 @@
 package auth
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
 	"github.com/alerdn/go-api/internal/shared"
+	"github.com/gin-gonic/gin"
 )
 
-func JWTMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
+func JWTMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "Token ausente ou mal formatado", http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token ausente ou inválido"})
+			c.Abort()
 			return
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		claims, err := ValidarToken(tokenStr)
 		if err != nil {
-			http.Error(w, "Token inválido: "+err.Error(), http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token inválido: " + err.Error()})
+			c.Abort()
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), shared.UsuarioIDKey, claims.UserID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+		// Salva o ID no contexto
+		c.Set(shared.UsuarioIDKey, claims.UserID)
+		c.Next()
+	}
 }

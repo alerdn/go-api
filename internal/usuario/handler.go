@@ -1,46 +1,46 @@
 package usuario
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/alerdn/go-api/internal/shared"
-	"github.com/alerdn/go-api/pkg/response"
+	"github.com/gin-gonic/gin"
 )
 
-func CadastrarHandler(w http.ResponseWriter, r *http.Request) {
+func CadastrarHandler(c *gin.Context) {
 	var usuario Usuario
 
-	if err := json.NewDecoder(r.Body).Decode(&usuario); err != nil {
-		response.JSON(w, http.StatusBadRequest, "JSON inválido")
+	if err := c.ShouldBindJSON(&usuario); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"erro": "JSON inválido"})
 		return
 	}
 
 	criado, err := Cadastrar(usuario)
 	if err != nil {
-		response.JSON(w, http.StatusBadRequest, err.Error())
-	}
-
-	response.JSON(w, http.StatusCreated, criado)
-}
-
-func ListarHandler(w http.ResponseWriter, r *http.Request) {
-	usuarios, err := Listar()
-	if err != nil {
-		response.JSON(w, http.StatusInternalServerError, "Erro ao listar usuários")
+		c.JSON(http.StatusBadRequest, gin.H{"erro": err.Error()})
 		return
 	}
-	response.JSON(w, http.StatusOK, usuarios)
+
+	c.JSON(http.StatusCreated, criado)
 }
 
-func PerfilHandler(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(shared.UsuarioIDKey).(int)
+func ListarHandler(c *gin.Context) {
+	usuarios, err := Listar()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"erro": "Erro ao listar usuários"})
+		return
+	}
+	c.JSON(http.StatusOK, usuarios)
+}
+
+func PerfilHandler(c *gin.Context) {
+	userID := c.GetInt(shared.UsuarioIDKey)
 
 	usuario, err := BuscarPerfil(userID)
 	if err != nil {
-		response.JSON(w, http.StatusInternalServerError, "Erro ao buscar perfil")
+		c.JSON(http.StatusInternalServerError, gin.H{"erro": "Erro ao buscar perfil"})
 		return
 	}
 
-	response.JSON(w, http.StatusOK, usuario)
+	c.JSON(http.StatusOK, usuario)
 }
